@@ -390,7 +390,7 @@ module VORLON {
                 }
             }
             
-			if (appliedStyles){
+			if (appliedStyles) {
 				for(var index = 0; index < appliedStyles.length; index++) {
 					var currentObj = appliedStyles[index];
 	                this._generateStyle(currentObj.property, currentObj.newValue, internalId);
@@ -548,6 +548,7 @@ module VORLON {
                 while (this._treeDiv.hasChildNodes()) {
                     this._treeDiv.removeChild(this._treeDiv.lastChild);
                 }
+                this._newAppliedStyles = {};
                 this._generateTreeNode(this._treeDiv, receivedObject, true);
             }
         }
