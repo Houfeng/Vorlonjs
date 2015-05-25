@@ -120,15 +120,10 @@ module VORLON {
 
         private _packageAndSendDOM() {
             this._internalId = 0;
-            this._newAppliedStyles = {};
             var packagedObject = this._packageNode(document.body);
             packagedObject.rootHTML = document.body.innerHTML;
             this._packageDOM(document.body, packagedObject);
             Core.Messenger.sendRealtimeMessage(this.getID(), packagedObject, RuntimeSide.Client);
-        }
-
-        private _markForRefresh() {
-            this.refresh();
         }
 
         public startClientSide(): void {
@@ -291,7 +286,7 @@ module VORLON {
             valueElement.className = "styleValue";
             valueElement.addEventListener("keydown",(evt) => {
             if (evt.keyCode === 13 || evt.keyCode === 9) { // Enter or tab
-	          //Create the properties object of elements.
+	            //Create the properties object of elements.
     			var propertyObject:any = {};
     			propertyObject.property = label.innerHTML;
     			propertyObject.newValue = valueElement.innerHTML;
@@ -308,12 +303,13 @@ module VORLON {
     					}
     				}
     				propsArr.push(propertyObject);
-			} else {
-				var proArr = [];
-				proArr.push(propertyObject);
-				this._newAppliedStyles[internalId] = proArr;
-			}
-		    Core.Messenger.sendRealtimeMessage(this.getID(), {
+    			} else {
+    				var proArr = [];
+    				proArr.push(propertyObject);
+    				this._newAppliedStyles[internalId] = proArr;
+    			}
+                                            
+		        Core.Messenger.sendRealtimeMessage(this.getID(), {
 	                type: "ruleEdit",
                         property: label.innerHTML,
                         newValue: valueElement.innerHTML,
@@ -371,21 +367,36 @@ module VORLON {
             while (this._styleView.hasChildNodes()) {
                 this._styleView.removeChild(this._styleView.lastChild);
             }
+            
+            var appliedStyles = this._newAppliedStyles[internalId];
 
             // Current styles
             for (var index = 0; index < styles.length; index++) {
                 var style = styles[index];
                 var splits = style.split(":");
-
-                this._generateStyle(splits[0], splits[1], internalId);
+                var notSet = true;
+                
+                if (appliedStyles) {
+				    for(var index = 0; index < appliedStyles.length; index++) {
+                        if (appliedStyles[index].property === splits[0]) {
+                            notSet = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (notSet) {
+                    this._generateStyle(splits[0], splits[1], internalId);
+                }
             }
-			if(this._newAppliedStyles[internalId]){
-				var newProps = this._newAppliedStyles[internalId];
-				for(var index = 0;index<newProps.length;index++){
-					var currentObj = newProps[index];
+            
+			if (appliedStyles){
+				for(var index = 0; index < appliedStyles.length; index++) {
+					var currentObj = appliedStyles[index];
 	                this._generateStyle(currentObj.property, currentObj.newValue, internalId);
 				}
 			}
+            
             // Append add style button
             this._generateButton(this._styleView, "+", "styleButton").addEventListener('click', (e) => {
                 this._generateStyle("property", "value", internalId, true);
